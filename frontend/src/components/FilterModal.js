@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 export default function FilterModal({ visible, onClose, filters, onApply }) {
   const [localFilters, setLocalFilters] = useState(filters);
+
+  // Update local filters when modal opens or filters prop changes
+  useEffect(() => {
+    if (visible) {
+      setLocalFilters(filters);
+    }
+  }, [filters, visible]);
 
   const statusOptions = [
     { label: 'All', value: 'all' },

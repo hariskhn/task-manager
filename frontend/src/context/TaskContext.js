@@ -1,12 +1,12 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import api from '../config/api';
+import React, { createContext, useState, useEffect, useContext } from "react";
+import api from "../config/api";
 
 const TaskContext = createContext();
 
 export const useTasks = () => {
   const context = useContext(TaskContext);
   if (!context) {
-    throw new Error('useTasks must be used within TaskProvider');
+    throw new Error("useTasks must be used within TaskProvider");
   }
   return context;
 };
@@ -16,11 +16,11 @@ export const TaskProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
-    status: 'all',
-    priority: 'all',
-    category: 'all',
-    search: '',
-    sortBy: 'date',
+    status: "all",
+    priority: "all",
+    category: "all",
+    search: "",
+    sortBy: "date",
   });
   const [stats, setStats] = useState({
     total: 0,
@@ -35,17 +35,21 @@ export const TaskProvider = ({ children }) => {
     setError(null);
     try {
       const params = {};
-      if (filters.status !== 'all') params.status = filters.status;
-      if (filters.priority !== 'all') params.priority = filters.priority;
-      if (filters.category !== 'all') params.category = filters.category;
+      if (filters.status && filters.status !== "all")
+        params.status = filters.status;
+      if (filters.priority && filters.priority !== "all")
+        params.priority = filters.priority;
+      if (filters.category && filters.category !== "all")
+        params.category = filters.category;
       if (filters.search) params.search = filters.search;
       if (filters.sortBy) params.sortBy = filters.sortBy;
 
-      const response = await api.get('/tasks', { params });
+      console.log("Fetching tasks with params:", params);
+      const response = await api.get("/tasks", { params });
       setTasks(response.data);
     } catch (err) {
       setError(err.message);
-      console.error('Error fetching tasks:', err);
+      console.error("Error fetching tasks:", err);
     } finally {
       setLoading(false);
     }
@@ -54,10 +58,10 @@ export const TaskProvider = ({ children }) => {
   // Fetch statistics
   const fetchStats = async () => {
     try {
-      const response = await api.get('/tasks/stats/summary');
+      const response = await api.get("/tasks/stats/summary");
       setStats(response.data);
     } catch (err) {
-      console.error('Error fetching stats:', err);
+      console.error("Error fetching stats:", err);
     }
   };
 
@@ -66,7 +70,7 @@ export const TaskProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.post('/tasks', taskData);
+      const response = await api.post("/tasks", taskData);
       setTasks([response.data, ...tasks]);
       await fetchStats();
       return response.data;
@@ -84,7 +88,7 @@ export const TaskProvider = ({ children }) => {
     setError(null);
     try {
       const response = await api.put(`/tasks/${id}`, taskData);
-      setTasks(tasks.map(task => task._id === id ? response.data : task));
+      setTasks(tasks.map((task) => (task._id === id ? response.data : task)));
       await fetchStats();
       return response.data;
     } catch (err) {
@@ -101,7 +105,7 @@ export const TaskProvider = ({ children }) => {
     setError(null);
     try {
       const response = await api.patch(`/tasks/${id}/toggle`);
-      setTasks(tasks.map(task => task._id === id ? response.data : task));
+      setTasks(tasks.map((task) => (task._id === id ? response.data : task)));
       await fetchStats();
       return response.data;
     } catch (err) {
@@ -117,12 +121,15 @@ export const TaskProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      await api.delete(`/tasks/${id}`);
-      setTasks(tasks.filter(task => task._id !== id));
+      const response = await api.delete(`/tasks/${id}`);
+      setTasks((prev) => prev.filter((task) => task._id !== id));
       await fetchStats();
+      return response.data;
     } catch (err) {
-      setError(err.message);
-      throw err;
+      const errorMessage =
+        err.response?.data?.error || err.message || "Failed to delete task";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -172,4 +179,3 @@ export const TaskProvider = ({ children }) => {
 
   return <TaskContext.Provider value={value}>{children}</TaskContext.Provider>;
 };
-

@@ -32,7 +32,7 @@ export default function TaskDetailScreen({ route, navigation }) {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     Alert.alert(
       'Delete Task',
       'Are you sure you want to delete this task?',
@@ -46,11 +46,13 @@ export default function TaskDetailScreen({ route, navigation }) {
               await deleteTask(taskId);
               navigation.goBack();
             } catch (error) {
-              Alert.alert('Error', 'Failed to delete task');
+              console.error('Delete error:', error);
+              Alert.alert('Error', error?.message || 'Failed to delete task');
             }
           },
         },
-      ]
+      ],
+      { cancelable: true }
     );
   };
 
@@ -191,7 +193,11 @@ export default function TaskDetailScreen({ route, navigation }) {
 
         <TouchableOpacity
           style={styles.deleteButton}
-          onPress={handleDelete}
+          onPress={(e) => {
+            e?.stopPropagation?.();
+            handleDelete();
+          }}
+          activeOpacity={0.7}
         >
           <Ionicons name="trash-outline" size={20} color="#ef4444" />
           <Text style={styles.deleteButtonText}>Delete</Text>

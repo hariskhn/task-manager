@@ -16,18 +16,18 @@ router.get('/', async (req, res) => {
       query.completed = false;
     }
     
-    // Filter by priority
-    if (priority) {
-      query.priority = priority;
+    // Filter by priority - only apply if priority is provided and not 'all'
+    if (priority && priority !== 'all' && priority.trim() !== '') {
+      query.priority = priority.toLowerCase();
     }
     
-    // Filter by category
-    if (category) {
-      query.category = category;
+    // Filter by category - only apply if category is provided and not 'all'
+    if (category && category !== 'all' && category.trim() !== '') {
+      query.category = category.toLowerCase();
     }
     
     // Search by title or description
-    if (search) {
+    if (search && search.trim() !== '') {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } }
@@ -46,6 +46,7 @@ router.get('/', async (req, res) => {
     const tasks = await Task.find(query).sort(sort);
     res.json(tasks);
   } catch (error) {
+    console.error('Error fetching tasks:', error);
     res.status(500).json({ error: error.message });
   }
 });
