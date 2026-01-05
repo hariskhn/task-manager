@@ -1,0 +1,35 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id("com.facebook.react.settings")
+    id("expo-autolinking-settings")
+}
+
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://www.jitpack.io' }
+    }
+}
+
+// 1. Manually resolve the expo-modules-autolinking script location
+def expoAutolinkingFile = new File(["node", "--print", "require.resolve('expo-modules-autolinking/package.json')"].execute(null, rootDir).text.trim(), "../scripts/android/autolinking_implementation.gradle")
+apply from: expoAutolinkingFile
+
+// 2. Configure React Native autolinking
+extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+    ex.autolinkLibrariesFromCommand()
+}
+
+// 3. Configure Expo modules autolinking
+useExpoModules()
+
+rootProject.name = 'Task Manager'
+include ':app'
