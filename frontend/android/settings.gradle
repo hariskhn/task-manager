@@ -1,35 +1,39 @@
 pluginManagement {
-    repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
-    }
+  def reactNativeGradlePlugin = new File(
+    providers.exec {
+      workingDir(rootDir)
+      commandLine("node", "--print", "require.resolve('@react-native/gradle-plugin/package.json', { paths: [require.resolve('react-native/package.json')] })")
+    }.standardOutput.asText.get().trim()
+  ).getParentFile().absolutePath
+  includeBuild(reactNativeGradlePlugin)
+  
+  def expoPluginsPath = new File(
+    providers.exec {
+      workingDir(rootDir)
+      commandLine("node", "--print", "require.resolve('expo-modules-autolinking/package.json', { paths: [require.resolve('expo/package.json')] })")
+    }.standardOutput.asText.get().trim(),
+    "../android/expo-gradle-plugin"
+  ).absolutePath
+  includeBuild(expoPluginsPath)
 }
 
 plugins {
-    id("com.facebook.react.settings")
-    id("expo-autolinking-settings")
+  id("com.facebook.react.settings")
+  id("expo-autolinking-settings")
 }
 
-dependencyResolutionManagement {
-    repositories {
-        google()
-        mavenCentral()
-        maven { url 'https://www.jitpack.io' }
-    }
-}
-
-// 1. Manually resolve the expo-modules-autolinking script location
-def expoAutolinkingFile = new File(["node", "--print", "require.resolve('expo-modules-autolinking/package.json')"].execute(null, rootDir).text.trim(), "../scripts/android/autolinking_implementation.gradle")
-apply from: expoAutolinkingFile
-
-// 2. Configure React Native autolinking
 extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+  if (System.getenv('EXPO_USE_COMMUNITY_AUTOLINKING') == '1') {
     ex.autolinkLibrariesFromCommand()
+  } else {
+    ex.autolinkLibrariesFromCommand(expoAutolinking.rnConfigCommand)
+  }
 }
-
-// 3. Configure Expo modules autolinking
-useExpoModules()
+expoAutolinking.useExpoModules()
 
 rootProject.name = 'Task Manager'
+
+expoAutolinking.useExpoVersionCatalog()
+
 include ':app'
+includeBuild(expoAutolinking.reactNativeGradlePlugin)
